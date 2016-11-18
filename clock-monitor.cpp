@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <iomanip>
 
 timespec clock(clockid_t clk_id)
@@ -43,10 +44,15 @@ timespec monotonicDiff() {
 }
 
 std::ostream &operator <<(std::ostream &os, const timespec &tv) {
+	std::ostringstream str;
 	if (tv.tv_nsec < 0 && tv.tv_sec == 0) {
-		os << '-';
+		str << '-';
+	} else {
+		str << '+';
 	}
-	os << tv.tv_sec << '.' << std::setw(10) << abs(tv.tv_nsec);
+	str << tv.tv_sec << '.' << abs(tv.tv_nsec);
+
+	os << str.str();
 	return os;
 }
 
@@ -60,21 +66,25 @@ int main() {
 	timespec started = clock(CLOCK_REALTIME);
 	timespec oldDiff = monotonicDiff();
 
+	using std::setw;
 	for (;;) {
 		timespec now = clock(CLOCK_REALTIME);
 		timespec newDiff = monotonicDiff();
 
-		std::cout << std::left;
 		std::cout
-			<< timespecSub(now, started)
+			<< std::right
+			<< setw(13) << timespecSub(now, started)
+			<< std::left
 			<< ": newDiff:"
-			<< newDiff
+			<< setw(22) << newDiff
 			<< " - oldDiff:"
-			<< oldDiff
+			<< setw(22) << oldDiff
 			<< " = "
-			<< timespecSub(newDiff, oldDiff)
+			<< setw(12) << timespecSub(newDiff, oldDiff)
 			<< " freq="
-			<< readLine("/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq")
+			<< setw(12) << readLine("/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq")
+			<< "|"
+			<< readLine("/sys/kernel/cluster/active")
 			<< std::endl;
 
 		sleep(10);
