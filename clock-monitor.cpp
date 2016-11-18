@@ -39,7 +39,7 @@ timespec timespecSub(const timespec &time1, const timespec &time2)
 }
 
 timespec monotonicDiff() {
-	return timespecSub(clock(CLOCK_REALTIME), clock(CLOCK_MONOTONIC));
+	return timespecSub(clock(CLOCK_REALTIME), clock(CLOCK_BOOTTIME));
 }
 
 std::ostream &operator <<(std::ostream &os, const timespec &tv) {
