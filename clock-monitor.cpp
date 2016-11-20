@@ -15,7 +15,7 @@ timespec clock(clockid_t clk_id)
 	return tv;
 }
 
-timespec timespecSub(const timespec &time1, const timespec &time2)
+timespec operator -(const timespec &time1, const timespec &time2)
 {
 	timespec result;
 
@@ -23,7 +23,7 @@ timespec timespecSub(const timespec &time1, const timespec &time2)
 	/* TIME1 < TIME2? */
 	if (time1.tv_sec - time2.tv_sec < 0 ||
 		(time1.tv_sec == time2.tv_sec && time1.tv_nsec - time2.tv_nsec < 0)) {
-		result = timespecSub(time2, time1);
+		result = time2 - time1;
 		result.tv_sec = -result.tv_sec;
 		result.tv_nsec = -result.tv_nsec;
 	} else {
@@ -37,10 +37,6 @@ timespec timespecSub(const timespec &time1, const timespec &time2)
 	}
 
 	return result;
-}
-
-timespec monotonicDiff() {
-	return timespecSub(clock(CLOCK_REALTIME), clock(CLOCK_BOOTTIME));
 }
 
 std::ostream &operator <<(std::ostream &os, const timespec &tv) {
@@ -64,27 +60,36 @@ std::string readLine(const char *path) {
 
 int main() {
 	timespec started = clock(CLOCK_REALTIME);
-	timespec oldDiff = monotonicDiff();
+	timespec oldDiffMonotonic = started - clock(CLOCK_MONOTONIC);
+	timespec oldDiffBoottime  = started - clock(CLOCK_BOOTTIME);
 
 	using std::setw;
 	for (;;) {
 		timespec now = clock(CLOCK_REALTIME);
-		timespec newDiff = monotonicDiff();
+		timespec newDiffMonotonic = now - clock(CLOCK_MONOTONIC);
+		timespec newDiffBoottime  = now - clock(CLOCK_BOOTTIME);
 
 		std::cout
 			<< std::right
-			<< setw(13) << timespecSub(now, started)
+			<< setw(13) << now - started
 			<< std::left
-			<< ": newDiff:"
-			<< setw(22) << newDiff
-			<< " - oldDiff:"
-			<< setw(22) << oldDiff
-			<< " = "
-			<< setw(12) << timespecSub(newDiff, oldDiff)
 			<< " freq="
 			<< setw(12) << readLine("/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq")
 			<< "|"
 			<< readLine("/sys/kernel/cluster/active")
+			<< std::endl;
+		std::cout
+			<< std::left
+			<< "Mnew:"    << setw(22) << newDiffMonotonic
+			<< " - Mold:" << setw(22) << oldDiffMonotonic
+			<< " = "      << setw(12) << newDiffMonotonic - oldDiffMonotonic
+			<< std::endl;
+
+		std::cout
+			<< std::left
+			<< "Bnew:"    << setw(22) << newDiffBoottime
+			<< " - Bold:" << setw(22) << oldDiffBoottime
+			<< " = "      << setw(12) << newDiffBoottime - oldDiffBoottime
 			<< std::endl;
 
 		sleep(10);
