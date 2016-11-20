@@ -48,36 +48,27 @@ int main() {
 	cout.imbue(std::locale(std::locale(), new comma_numpunct()));
 	cout << std::fixed;
 
-	auto started = clock(CLOCK_REALTIME);
-	auto oldDiffMonotonic = started - clock(CLOCK_MONOTONIC);
-	auto oldDiffBoottime  = started - clock(CLOCK_BOOTTIME);
+	auto referenceTime = clock(CLOCK_REALTIME);
+	auto monotonic     = clock(CLOCK_MONOTONIC);
+	auto boottime      = clock(CLOCK_BOOTTIME);
 
+	cout << "E=elpased, M=monotonic, F=freq" << endl;
 	for (;;) {
-		auto now = clock(CLOCK_REALTIME);
-		auto newDiffMonotonic = now - clock(CLOCK_MONOTONIC);
-		auto newDiffBoottime  = now - clock(CLOCK_BOOTTIME);
+		auto currentTime  = clock(CLOCK_REALTIME);
+		auto monotonicNow = clock(CLOCK_MONOTONIC);
+		auto boottimeNow  = clock(CLOCK_BOOTTIME);
+		auto elapsed = currentTime - referenceTime;
 
 		cout
 			<< right
-			<< setw(13) << now - started
-			<< left
-			<< " freq="
+			<< "E:" << setw(13) << elapsed
+			<< "|M:" << right << setw(12) << (monotonicNow - monotonic) << ' ' << left << setw(12) << (monotonicNow - monotonic - elapsed)
+			<< "|B:"  << right << setw(12) << (boottimeNow - boottime)   << ' ' << left << setw(12) << (boottimeNow - boottime - elapsed)
+			<< right
+			<< "|F:"
 			<< setw(12) << readLine("/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq")
 			<< "|"
 			<< readLine("/sys/kernel/cluster/active")
-			<< endl;
-		cout
-			<< left
-			<< "Mnew:"    << setw(22) << newDiffMonotonic
-			<< " - Mold:" << setw(22) << oldDiffMonotonic
-			<< " = "      << setw(12) << newDiffMonotonic - oldDiffMonotonic
-			<< endl;
-
-		cout
-			<< left
-			<< "Bnew:"    << setw(22) << newDiffBoottime
-			<< " - Bold:" << setw(22) << oldDiffBoottime
-			<< " = "      << setw(12) << newDiffBoottime - oldDiffBoottime
 			<< endl;
 
 		sleep(10);
